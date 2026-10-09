@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>오늘의 마음 풍경, 물상 카드</title>
+  <!-- Google Fonts: Noto Serif KR & Gowun Batang for poetic analog feel -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Serif+KR:wght@300;400;600&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            paper: '#FBF7EE',
+            'paper-subtle': '#F4EDE0',
+            wood: '#2B2418',
+            'wood-muted': '#5C5243',
+            'gold-accent': '#C5A059',
+            'olive-accent': '#606C5A',
+            borderline: '#E7DEC8',
+          },
+          fontFamily: {
+            serif: ['Gowun Batang', 'Noto Serif KR', 'serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Paper texture subtle touch & custom scroll */
+    body {
+      background-color: #F5EFEB;
+      font-family: 'Gowun Batang', 'Noto Serif KR', serif;
+      color: #2B2418;
+      -webkit-font-smoothing: antialiased;
+    }
+    
+    .paper-texture {
+      background-color: #FBF7EE;
+      background-image: radial-gradient(#2B2418 0.4px, transparent 0.4px);
+      background-size: 16px 16px;
+      background-position: -8px -8px;
+    }
+
+    /* Custom smooth card transition */
+    .card-item {
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .card-item.active {
+      transform: translateY(-4px) scale(1.02);
+      border-color: #C5A059;
+      box-shadow: 0 12px 24px -8px rgba(43, 36, 24, 0.12), 0 0 0 1px #C5A059;
+      background-color: #FFFDF9;
+    }
+    
+    /* Result panel fade & slide animation */
+    @keyframes panelReveal {
+      from {
+        opacity: 0;
+        transform: translateY(16px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .animate-reveal {
+      animation: panelReveal 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Hide scrollbar for category tabs */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    /* Floating subtle stamp */
+    .hanko-stamp {
+      border: 1.5px solid #A84236;
+      color: #A84236;
+      padding: 2px 5px;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      border-radius: 3px;
+      display: inline-block;
+      transform: rotate(-3deg);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex justify-center items-start sm:py-8 antialiased selection:bg-[#EAE0CD] selection:text-[#2B2418]">
+
+  <!-- Mobile Frame Container (Max 430px for genuine mobile app viewport) -->
+  <div class="w-full max-w-md min-h-screen sm:min-h-[880px] paper-texture sm:rounded-[36px] sm:shadow-2xl sm:border sm:border-[#E5DAC4] flex flex-col justify-between overflow-hidden relative">
+
+    <!-- Top Ambient Decoration -->
+    <div class="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-[#C5A059]/40 to-transparent"></div>
+
+    <!-- Main Content Area -->
+    <div class="px-6 pt-9 pb-8 flex-1 flex flex-col">
+      
+      <!-- Header -->
+      <header class="text-center mb-7 relative">
+        <div class="flex items-center justify-between mb-3 text-xs tracking-wider text-wood-muted">
+          <span class="flex items-center gap-1.5 opacity-80">
+            <span class="w-1.5 h-1.5 rounded-full bg-olive-accent inline-block animate-pulse"></span>
+            <span id="current-time-str">오늘의 절기</span>
+          </span>
+          <span class="hanko-stamp font-serif font-bold">心象 (마음상)</span>
+        </div>
+
+        <h1 class="text-[23px] font-bold tracking-tight text-wood mb-1.5 leading-snug">
+          오늘의 마음 풍경
+        </h1>
+        <p class="text-xs text-wood-muted font-normal leading-relaxed max-w-[280px] mx-auto">
+          복잡한 사주 계산 대신, 지금 마음에 머무는<br/>물상(物象) 하나를 가만히 골라보세요.
+        </p>
+        
+        <div class="w-8 h-[1px] bg-borderline mx-auto mt-4"></div>
+      </header>
+
+      <!-- Category Filter Tabs -->
+      <div class="mb-5">
+        <label class="block text-[11px] font-medium tracking-wider text-wood-muted/80 mb-2.5 uppercase">
+          고민의 결 고르기
+        </label>
+        <div class="flex items-center justify-between gap-1.5 bg-[#F2EADA] p-1 rounded-2xl border border-borderline/60">
+          <button onclick="selectCategory('career')" id="tab-career" class="category-tab flex-1 py-2 px-2.5 rounded-xl text-[12px] font-medium transition-all duration-300 flex items-center justify-center gap-1.5 bg-white text-wood shadow-sm">
+            <span>🌿</span>
+            <span>진로·일</span>
+          </button>
+          <button onclick="selectCategory('love')" id="tab-love" class="category-tab flex-1 py-2 px-2.5 rounded-xl text-[12px] font-medium transition-all duration-300 flex items-center justify-center gap-1.5 text-wood-muted hover:text-wood">
+            <span>💧</span>
+            <span>관계·사랑</span>
+          </button>
+          <button onclick="selectCategory('wealth')" id="tab-wealth" class="category-tab flex-1 py-2 px-2.5 rounded-xl text-[12px] font-medium transition-all duration-300 flex items-center justify-center gap-1.5 text-wood-muted hover:text-wood">
+            <span>🌰</span>
+            <span>재물·흐름</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Card Selection Gallery -->
+      <div class="mb-6">
+        <div class="flex items-center justify-between mb-2.5">
+          <span class="text-[11px] font-medium tracking-wider text-wood-muted/80">
+            직관적인 물상 카드 선택
+          </span>
+          <span class="text-[10px] text-wood-muted/60 italic" id="hint-text">
+            마음이 먼저 이끌리는 것을 터치하세요
+          </span>
+        </div>
+
+        <!-- 4 Iconic Nature Cards -->
+        <div class="grid grid-cols-2 gap-3" id="cards-container">
+          <!-- Cards dynamically populated or active via JS -->
+        </div>
+      </div>
+
+      <!-- Result Briefing Panel (Dynamic) -->
+      <div id="result-panel" class="hidden transition-all duration-500">
+        <div class="bg-[#FFFDF9] border border-borderline rounded-2xl p-4 sm:p-5 relative shadow-[0_8px_20px_-6px_rgba(43,36,24,0.06)] animate-reveal">
+          
+          <!-- Card Mini Tag & Symbol -->
+          <div class="flex items-center justify-between pb-3 mb-3 border-b border-borderline/70">
+            <div class="flex items-center gap-2">
+              <span class="text-xl" id="res-icon">🌲</span>
+              <div>
+                <span class="text-[10px] text-olive-accent font-semibold tracking-wider uppercase block" id="res-category-label">진로·일의 방향</span>
+                <h4 class="text-sm font-bold text-wood" id="res-name">바위 틈 소나무 (甲木)</h4>
+              </div>
+            </div>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-[#F4EDE0] text-wood-muted border border-borderline" id="res-element">
+              목(木)의 기운
+            </span>
+          </div>
+
+          <!-- Diagnosis Poetic Body -->
+          <div class="space-y-2 mb-4">
+            <p class="text-xs font-semibold text-[#8C6D37] flex items-center gap-1.5">
+              <span>✦</span>
+              <span id="res-summary">지금 당신의 마음속 풍경은...</span>
+            </p>
+            <p class="text-[12.5px] text-wood/90 leading-[1.7] whitespace-pre-line font-normal" id="res-description">
+              단단한 지반 위에서 잎을 틔우려 애쓰는 중입니다. 
+              조급함보다는 뿌리를 깊게 내리는 시기이니, 지금의 버팀은 결코 헛되지 않습니다.
+            </p>
+            <div class="p-2.5 bg-[#FAF6EE] rounded-xl border border-dashed border-[#DFD5BF] mt-3">
+              <p class="text-[11px] text-wood-muted leading-relaxed">
+                <span class="font-bold text-wood">💡 마음의 처방 :</span> 
+                <span id="res-prescription">주변의 속도에 휘둘리지 말고, 오늘 할 수 있는 단 하나의 마디를 세우세요.</span>
+              </p>
+            </div>
+          </div>
+
+          <!-- Secondary Interaction: Share / Re-pick prompt -->
+          <div class="flex items-center justify-between pt-1 text-[11px] text-wood-muted/70">
+            <span class="flex items-center gap-1 text-[10px]">
+              <i data-lucide="sparkles" class="w-3 h-3 text-gold-accent"></i>
+              오늘의 물상 기운 갈무리됨
+            </span>
+            <button onclick="resetSelection()" class="hover:text-wood underline underline-offset-2 transition-colors text-[10px]">
+              다른 카드 다시 뽑기
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State Guide (When no card is chosen yet) -->
+      <div id="empty-state" class="text-center py-7 px-4 border border-dashed border-borderline/80 rounded-2xl bg-[#FAF5EA]/50 my-auto">
+        <div class="w-9 h-9 rounded-full bg-[#EFE6D5] flex items-center justify-center mx-auto mb-2 text-wood/60">
+          <i data-lucide="compass" class="w-4 h-4"></i>
+        </div>
+        <p class="text-xs font-medium text-wood mb-1">마음의 결을 비추는 거울</p>
+        <p class="text-[11px] text-wood-muted/70 leading-relaxed">
+          카테고리를 누르고 위 카드 중 하나를 선택하면<br/>
+          당신을 위한 따뜻한 물상 진단이 펼쳐집니다.
+        </p>
+      </div>
+
+    </div>
+
+    <!-- Bottom Fixed CTA Section -->
+    <div class="p-5 pt-3 bg-gradient-to-t from-paper via-paper to-transparent border-t border-borderline/60">
+      <div class="space-y-2">
+        <!-- Main CTA Button -->
+        <a href="https://open.kakao.com" target="_blank" rel="noopener noreferrer" 
+           class="group w-full py-3.5 px-4 bg-wood hover:bg-[#3D3323] text-[#FBF6EC] rounded-2xl font-medium text-xs tracking-wide flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all duration-300 transform active:scale-[0.98]">
+          <i data-lucide="message-circle" class="w-4 h-4 text-gold-accent transition-transform group-hover:scale-110"></i>
+          <span>이 고민에 대해 더 깊은 1:1 맞춤 진단 받기</span>
+          <i data-lucide="arrow-right" class="w-3.5 h-3.5 opacity-60 group-hover:translate-x-0.5 transition-transform"></i>
+        </a>
+        
+        <!-- Subtle Footnote -->
+        <p class="text-[10px] text-center text-wood-muted/60 tracking-tight">
+          사주 물상학 기반 · 익명 1:1 카카오톡 오픈채팅 또는 구글 폼 코칭 신청
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Application Logic -->
+  <script>
+    // Data definition for categories and natural elemental cards
+    const DATA = {
+      career: [
+        {
+          id: 'pine',
+          icon: '🌲',
+          name: '바위 틈 소나무',
+          element: '목(木) · 갑목',
+          keyword: '인내와 독립',
+          summary: '지금 당신의 마음속 풍경은...',
+          desc: '척박한 바위틈에서도 올곧게 푸르름을 지키는 늙은 소나무와 같습니다. 환경이 뜻대로 풀리지 않아 고단했을 수 있으나, 당신이 버텨온 시간 자체가 이미 깊은 뿌리가 되었습니다. 조급함을 내려놓을 때 비로소 성장합니다.',
+          prescription: '새로운 시도보다 현재 쥐고 있는 기술과 기본기를 단단히 다져보세요.'
+        },
+        {
+          id: 'forge',
+          icon: '🔥',
+          name: '대장간의 불꽃',
+          element: '화(火) · 정화',
+          keyword: '열정과 숙련',
+          summary: '지금 당신의 마음속 풍경은...',
+          desc: '쇠를 녹여 명검으로 담금질하는 은근한 불꽃의 풍경입니다. 내면에 벼려온 열망과 전문성이 한 단계 도약하기 직전의 응축된 온도를 품고 있습니다. 에너지를 산만하게 흩뿌리지 않고 한 점에 집중할 때입니다.',
+          prescription: '목표를 세분화하여 이번 주에 끝낼 가장 중요한 한 가지 프로젝트에 화력을 쏟으세요.'
+        },
+        {
+          id: 'mountain',
+          icon: '⛰️',
+          name: '안개 낀 큰 산',
+          element: '토(土) · 무토',
+          keyword: '묵직함과 포용',
+          summary: '지금 당신의 마음속 풍경은...',
+          desc: '사계절의 변화에도 흔들림 없이 우직하게 자리를 지키는 영산(靈山)의 모습입니다. 주변의 변덕스러운 잔물결에 일희일비하지 마세요. 당신의 무게감과 신뢰는 묵묵한 시간 속에서 가장 빛을 발합니다.',
+          prescription: '주변 사람들의 성급한 조언에 휩쓸리지 말고 본인의 속도감을 지키세요.'
+        },
+        {
+          id: 'spring',
+          icon: '🌊',
+          name: '바위 속 옹달샘',
+          element: '수(水) · 계수',
+          keyword: '지혜와 융통',
+          summary: '지금 당신의 마음속 풍경은...',
+          desc: '막히면 돌아가고 틈이 생기면 스며드는 유연한 물길의 형상입니다. 정면 돌파가 버겁다면 방식을 살짝 비틀어 유연하게 우회하는 지혜가 필요한 국면입니다. 당신의 직관은 이미 답을 알고 있습니다.',
+          prescription: '고집을 잠시 내려놓고 다른 방식의 협업이나 사이드 프로젝트를 시도해보세요.'
+        }
+      ],
+      love: [
+        {
+          id: 'moon',
+          icon: '🌙',
+          name: '고요한 호수의 달',
+          element: '수(水) · 계수',
+          keyword: '은은한 사유',
+          summary: '지금 당신의 마음속 풍경은...',
+          desc: '물결이 잔잔해져야 밤하늘의 둥근 달이 오롯이 비치듯, 상대방에게 향한 마음 이전에 내 마음의 파도를 먼저 가라앉혀야 하는 시기입니다. 억지로 다가가기보다 은은한 온도를 유지하는 편이 이롭습니다.',
+          prescription: '상대에게 즉각적인 답을 바라기보다, 혼자만의 고요한 산책 시간을 가져보세요.'
+        },
+        {
+          id: 'sunflower',
+          icon: '🌻',
+          name: '볕 좋은 들꽃',
+          element: '화(火) · 병화',
+          keyword: '순수한 온기',
+          summary: '지금 당신의 마음속 풍경은...',
+          desc: '숨김없이 햇살을 온몸으로 받으며 환하게 피어난 들꽃의 형상입니다. 계산하지 않고 진솔하게 건넨 당신의 따뜻한 말 한마디가 상대방의 닫힌 문을 여는 강력한 열쇠가 됩니다.',
+          prescription: '마음속에 품고 있던 고마움이나 미안함을 담백하게 문장으로 전해보세요.'
+        },
+        {
+          id: 'stone',
+          icon: '🪨',
+          name: '강가의 조약돌',
+          element: '금(金) · 신금',
+          keyword: '거리감과 경계',
+          summary: '지금 당신의 마음속 풍경은...',
+          desc: '오랜 세월 물결에 부딪히며 모난 곳이 깎여나가 반질반질해진 자갈의 풍경입니다. 상처받지 않으려 스스로 단단한 방어막을 두르고 있지는 않은가요? 적당한 경계는 필요하지만 지나치면 외로움이 됩니다.',
+          prescription: '신뢰할 수 있는 사람에게 작은 취약점을 솔직히 털어놓아 보세요.'
+        },
+        {
+          id: 'breeze',
+          icon: '🌾',
+          name: '초원의 실바람',
+          element: '목(木) · 을목',
+          keyword: '자유와 배려',
+          summary: '지금 당신의 마음속 풍경은...',
+          desc: '억압되지 않고 풀잎 사이를 가볍게 스쳐 지나가는 초가을의 바람결입니다. 관계에서 집착이나 구속감이 느껴진다면, 서로에게 숨 쉴 수 있는 각자의 빈 공간(여백)을 선물할 때입니다.',
+          prescription: '각자의 사생활과 취미를 존중하며 건강한 심리적 안전거리를 두세요.'
+        }
+      ],
+      wealth: [
+        {
+          id: 'granary',
+          icon: '🌰',
+          name: '가을 숲의 밤송이',
+          element: '토(土) · 기토',
+          keyword: '결실과 비축',
+          summary: '지금 당신의 마음속 풍경은...',
+          desc: '서리를 맞으며 알알이 알곡을 여물어가는 늦가을 밤송이의 모습입니다. 지금은 무리한 확장이나 위험한 투기보다는, 지금까지 모아둔 밑천과 작은 자산을 안전하게 갈무리할 안정기입니다.',
+          prescription: '새는 지출 구멍을 점검하고 단기적인 예적금이나 안전 자산 비중을 높이세요.'
+        },
+        {
+          id: 'river',
+          icon: '⛵',
+          name: '큰 강의 돛단배',
+          element: '수(水) · 임수',
+          keyword: '흐름과 순환',
+          summary: '지금 당신의 마음속 풍경은...',
+          desc: '도도하게 흐르는 큰 강물 위에 순풍을 기다리는 돛단배의 풍경입니다. 돈의 흐름은 고여있지 않고 순환하는 법입니다. 묶여있는 생각의 틀을 깨고 시야를 넓히면 새로운 파이프라인이 보입니다.',
+          prescription: '기존의 수익 채널 외에 새로운 부업이나 지식 콘텐츠의 가능성을 탐색하세요.'
+        },
+        {
+          id: 'goldore',
+          icon: '⛏️',
+          name: '땅속의 원석',
+          element: '금(金) · 경금',
+          keyword: '잠재력과 가치',
+          summary: '지금 당신의 마음속 풍경은...',
+          desc: '흙더미 속에 묻혀 아직 세공되지 않은 굵은 금맥의 기운입니다. 내 손에 쥔 가치가 저평가받고 있다고 불안해하지 마세요. 실력을 가다듬고 브랜딩을 얹는 순간 그 가치는 몇 배로 뜁니다.',
+          prescription: '단기 이익을 쫓기보다 자신의 몸값을 올릴 수 있는 배움에 아낌없이 투자하세요.'
+        },
+        {
+          id: 'rain',
+          icon: '🌧️',
+          name: '단비 내리는 들판',
+          element: '수(水) · 계수',
+          keyword: '적시의 기회',
+          summary: '지금 당신의 마음속 풍경은...',
+          desc: '타는 목마름을 적셔주는 시원한 단비의 모습입니다. 자금 흐름에 숨통이 트일 계기가 다가오고 있습니다. 예상치 못한 도움의 손길이나 좋은 제안이 올 때 망설이지 말고 잡으세요.',
+          prescription: '주변의 인연이나 기존 네트워크에 안부를 물으며 기회의 통로를 열어두세요.'
+        }
+      ]
+    };
+
+    let currentCategory = 'career';
+    let currentSelectedCardId = null;
+
+    // Initialize display with current date in korean calendar feel
+    function updateDateLabel() {
+      const today = new Date();
+      const month = today.getMonth() + 1;
+      const date = today.getDate();
+      const days = ['일', '월', '화', '수', '목', '금', '토'];
+      const dayName = days[today.getDay()];
+      const hour = today.getHours();
+      
+      let seasonTime = '새벽';
+      if (hour >= 6 && hour < 12) seasonTime = '아침';
+      else if (hour >= 12 && hour < 18) seasonTime = '낮';
+      else seasonTime = '밤';
+
+      const timeEl = document.getElementById('current-time-str');
+      if (timeEl) {
+        timeEl.innerText = `${month}월 ${date}일 (${dayName}) · ${seasonTime}의 기운`;
+      }
+    }
+
+    // Render cards for selected category
+    function renderCards() {
+      const container = document.getElementById('cards-container');
+      container.innerHTML = '';
+      const list = DATA[currentCategory];
+
+      list.forEach((item) => {
+        const isSelected = currentSelectedCardId === item.id;
+        const cardBtn = document.createElement('button');
+        cardBtn.className = `card-item text-left p-3.5 rounded-2xl border transition-all duration-300 relative flex flex-col justify-between h-28 ${
+          isSelected 
+            ? 'active' 
+            : 'bg-[#FAF6EE] border-borderline/80 hover:border-gold-accent/60 hover:bg-[#FFFDF8]'
+        }`;
+        cardBtn.onclick = () => selectCard(item.id);
+
+        cardBtn.innerHTML = `
+          <div class="flex items-start justify-between w-full">
+            <span class="text-2xl filter drop-shadow-sm">${item.icon}</span>
+            <span class="text-[9.5px] px-2 py-0.5 rounded-full ${isSelected ? 'bg-gold-accent text-white font-medium' : 'bg-[#EFE7D5] text-wood-muted'}">
+              ${item.keyword}
+            </span>
+          </div>
+          <div>
+            <span class="text-[10px] text-wood-muted block leading-none mb-1 opacity-75">${item.element}</span>
+            <div class="font-bold text-xs text-wood leading-tight">${item.name}</div>
+          </div>
+        `;
+        container.appendChild(cardBtn);
+      });
+    }
+
+    // Tab category switch
+    function selectCategory(category) {
+      if (currentCategory === category) return;
+      currentCategory = category;
+      currentSelectedCardId = null;
+
+      // Update Tab Styles
+      const tabs = ['career', 'love', 'wealth'];
+      tabs.forEach(t => {
+        const btn = document.getElementById(`tab-${t}`);
+        if (t === category) {
+          btn.className = 'category-tab flex-1 py-2 px-2.5 rounded-xl text-[12px] font-bold transition-all duration-300 flex items-center justify-center gap-1.5 bg-white text-wood shadow-sm';
+        } else {
+          btn.className = 'category-tab flex-1 py-2 px-2.5 rounded-xl text-[12px] font-medium transition-all duration-300 flex items-center justify-center gap-1.5 text-wood-muted hover:text-wood';
+        }
+      });
+
+      // Reset bottom result view
+      document.getElementById('result-panel').classList.add('hidden');
+      document.getElementById('empty-state').classList.remove('hidden');
+      document.getElementById('hint-text').innerText = '마음이 먼저 이끌리는 것을 터치하세요';
+
+      renderCards();
+    }
+
+    // Card selection & display briefing
+    function selectCard(cardId) {
+      currentSelectedCardId = cardId;
+      renderCards();
+
+      const item = DATA[currentCategory].find(c => c.id === cardId);
+      if (!item) return;
+
+      // Populate result panel
+      document.getElementById('res-icon').innerText = item.icon;
+      document.getElementById('res-name').innerText = item.name;
+      document.getElementById('res-element').innerText = item.element;
+      
+      const catLabels = { career: '진로·일의 방향', love: '관계·마음의 결', wealth: '재물·물길의 흐름' };
+      document.getElementById('res-category-label').innerText = catLabels[currentCategory];
+      
+      document.getElementById('res-summary').innerText = item.summary;
+      document.getElementById('res-description').innerText = item.desc;
+      document.getElementById('res-prescription').innerText = item.prescription;
+
+      // Toggle views with smooth display
+      document.getElementById('empty-state').classList.add('hidden');
+      const resultPanel = document.getElementById('result-panel');
+      resultPanel.classList.remove('hidden');
+      
+      document.getElementById('hint-text').innerText = '선택한 물상이 아래에 해석되었습니다';
+
+      // Scroll smoothly to result panel
+      setTimeout(() => {
+        resultPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 100);
+    }
+
+    function resetSelection() {
+      currentSelectedCardId = null;
+      renderCards();
+      document.getElementById('result-panel').classList.add('hidden');
+      document.getElementById('empty-state').classList.remove('hidden');
+      document.getElementById('hint-text').innerText = '마음이 먼저 이끌리는 것을 터치하세요';
+    }
+
+    // Initialize Lucide icons and app on load
+    window.addEventListener('DOMContentLoaded', () => {
+      updateDateLabel();
+      renderCards();
+      if (window.lucide) {
+        lucide.createIcons();
+      }
+    });
+  </script>
+</body>
+</html>
