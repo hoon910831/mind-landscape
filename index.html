@@ -547,6 +547,22 @@
 const db = getFirestore(app);
 const auth = getAuth(app);
 signInAnonymously(auth).catch(console.error);
+  window.saveMindRecord = async function(cardName) {
+  if (cardName !== '바위 틈 소나무') return;
+
+  try {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    await addDoc(collection(db, 'mind_records'), {
+      selected_card: cardName,
+      user_id: user.uid
+    });
+    console.log('카드 기록 저장 성공');
+  } catch (error) {
+    console.error('카드 기록 저장 실패:', error);
+  }
+};
 </script>
 </body>
 </html>
