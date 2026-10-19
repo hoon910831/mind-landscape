@@ -477,7 +477,7 @@
 
       const item = DATA[currentCategory].find(c => c.id === cardId);
       if (!item) return;
-
+if (window.saveMindRecord) window.saveMindRecord(item.name);
       // Populate result panel
       document.getElementById('res-icon').innerText = item.icon;
       document.getElementById('res-name').innerText = item.name;
